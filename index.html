@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -36,7 +35,6 @@
     .card{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:18px; box-shadow: 0 10px 30px rgba(0,0,0,.25) }
     .sparkle{color:var(--accent-2)}
 
-    /* === Slideshow === */
     .slideshow{
       position:relative; width:100%; max-width:820px; height:480px; margin:auto; overflow:hidden;
       border-radius:18px; border:1px solid rgba(255,255,255,.12); background:#0b0f1e;
@@ -48,12 +46,10 @@
     }
     .slide.active{ opacity:1; transform:scale(1.0); }
 
-    /* Confetti canvas */
     #confetti{
       position:fixed; inset:0; pointer-events:none; z-index:9999;
     }
 
-    /* ===== Envelope overlay ===== */
     .overlay{
       position:fixed; inset:0; z-index:9998; display:flex; align-items:center; justify-content:center;
       background: radial-gradient(1400px 1000px at 70% -10%, #221638, #0f1020);
@@ -67,7 +63,7 @@
       position:absolute; inset:0; border-radius:18px; background:#fff; color:#1a1120;
       display:flex; align-items:flex-start; justify-content:center; flex-direction:column; gap:10px;
       box-shadow: 0 24px 70px rgba(0,0,0,.45);
-      padding:120px 20px 20px; /* Push content lower */
+      padding:120px 20px 20px;
       text-align:center;
       z-index:1;
     }
@@ -88,7 +84,6 @@
 <body>
   <canvas id="confetti"></canvas>
 
-  <!-- Envelope cover -->
   <div class="overlay" id="overlay">
     <div class="envelope" id="envelope">
       <div class="env-card">
@@ -129,13 +124,11 @@ Yu Cheng
 
   <footer>Made with love.</footer>
 
-  <!-- Audio: will start on letter open -->
   <audio id="bgMusic" loop playsinline preload="auto">
     <source src="music.mp3" type="audio/mpeg">
   </audio>
 
   <script>
-    // ===== Counter =====
     const startDate = new Date("2022-09-09");
     const daysEl = document.getElementById("daysTogether");
     function updateDays(){
@@ -145,21 +138,19 @@ Yu Cheng
     }
     updateDays(); setInterval(updateDays, 60_000);
 
-    // ===== Music helpers =====
     const bgMusic = document.getElementById("bgMusic");
     async function playMusic(){
       try{
         bgMusic.muted = false;
         bgMusic.volume = 1.0;
         await bgMusic.play();
-      }catch(e){ /* ignore */ }
+      }catch(e){/* ignore */}
     }
 
-    // ===== Slideshow =====
-    let images = [];     // {src}
+    let images = [];
     let index = -1;
     let timer = null;
-    const duration = 4000; // 4s per slide
+    const duration = 4000;
     const slideshow = document.getElementById("slideshow");
 
     function createSlide(src){
@@ -171,22 +162,18 @@ Yu Cheng
       img.src = src;
       return img;
     }
-
     function setActive(i){
       const slides = Array.from(slideshow.querySelectorAll(".slide"));
       slides.forEach(s => s.classList.remove("active"));
-      if (!slides[i]) return;
-      slides[i].classList.add("active");
+      if (slides[i]) slides[i].classList.add("active");
     }
-
     function nextSlide(){
       if (!images.length) return;
       index = (index + 1) % images.length;
       setActive(index);
     }
-
     function startSlideshow(){
-      if (!images.length){ return; }
+      if (!images.length) return;
       if (timer) clearInterval(timer);
       slideshow.innerHTML = "";
       images.forEach(img => slideshow.appendChild(createSlide(img.src)));
@@ -194,31 +181,29 @@ Yu Cheng
       timer = setInterval(nextSlide, duration);
     }
 
-    async function loadFromDirectoryIndex(){
+    // === GitHub Pages friendly loader: use manifest.json ===
+    async function loadFromManifest(){
       try{
-        const res = await fetch("pictures/");
+        const res = await fetch("pictures/manifest.json", {cache:"no-store"});
         if (!res.ok) return false;
-        const html = await res.text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        const links = Array.from(doc.querySelectorAll("a[href]"))
-          .map(a => a.getAttribute("href"))
-          .filter(h => h && /\.(jpe?g)$/i.test(h));
-        if (!links.length) return false;
-        images = links.map(h => ({
-          src: h.startsWith("http") || h.startsWith("/") ? h : ("pictures/" + h)
-        }));
+        const list = await res.json();
+        if (!Array.isArray(list) || !list.length) return false;
+        images = list
+          .filter(name => typeof name === "string" && /\.(jpe?g|png|gif|webp)$/i.test(name))
+          .map(name => ({src: "pictures/" + name}));
         images.sort((a,b) => a.src.localeCompare(b.src, undefined, {numeric:true, sensitivity:"base"}));
-        return true;
+        return images.length > 0;
       }catch(e){ return false; }
     }
 
+    // Fallback probe (works if your files follow common names like photo1.jpg or IMG_0001.jpg)
     async function lightProbe(){
-      const exts = [".jpg",".jpeg",".JPG",".JPEG"];
+      const exts = [".jpg",".jpeg",".JPG",".JPEG",".png",".PNG",".webp",".WEBP"];
       const candidates = [];
-      for (let i=1;i<=60;i++){ exts.forEach(ext => candidates.push(`pictures/photo${i}${ext}`)); }
-      for (let i=1;i<=60;i++){
+      for (let i=1;i<=200;i++){ exts.forEach(ext => candidates.push(`pictures/photo${i}${ext}`)); }
+      for (let i=1;i<=200;i++){
         const s4 = String(i).padStart(4,"0");
-        ["IMG_","DSC_","DXZ_"].forEach(prefix => {
+        ["IMG_","DSC_","PXL_","DXZ_"].forEach(prefix => {
           exts.forEach(ext => candidates.push(`pictures/${prefix}${s4}${ext}`));
         });
       }
@@ -238,7 +223,6 @@ Yu Cheng
       return false;
     }
 
-    // ===== Envelope open logic =====
     const overlay = document.getElementById("overlay");
     const envelope = document.getElementById("envelope");
 
@@ -247,20 +231,15 @@ Yu Cheng
       await new Promise(r => setTimeout(r, 650));
       playMusic();
       fireConfetti();
-      if (location.protocol === "http:" || location.protocol === "https:"){
-        const ok = await loadFromDirectoryIndex();
-        if (!ok) { await lightProbe(); }
-      } else {
-        await lightProbe();
-      }
+      // Use manifest on GitHub Pages
+      const ok = await loadFromManifest();
+      if (!ok){ await lightProbe(); }
       startSlideshow();
       overlay.classList.add("hidden");
       setTimeout(() => { overlay.remove(); }, 700);
     }
-
     envelope.addEventListener("click", openLetter, {once:true});
 
-    // ===== Simple confetti burst =====
     function fireConfetti(){
       const canvas = document.getElementById("confetti");
       const ctx = canvas.getContext("2d");
@@ -269,7 +248,6 @@ Yu Cheng
       window.addEventListener("resize", () => {
         W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight;
       });
-
       const N = 200;
       const pieces = Array.from({length:N}).map(()=> ({
         x: Math.random()*W,
@@ -281,29 +259,22 @@ Yu Cheng
         a: Math.random()*Math.PI*2,
         va: -0.2 + Math.random()*0.4
       }));
-
       function tick(t){
         const dt = (t - (tick._last||t))/16.67; tick._last = t;
         ctx.clearRect(0,0,W,H);
         let allOut = true;
         for (const p of pieces){
           p.x += p.vx*dt; p.y += p.vy*dt; p.a += p.va*dt; p.vy += 0.02*dt;
-          ctx.save();
-          ctx.translate(p.x,p.y);
-          ctx.rotate(p.a);
-          ctx.fillStyle = p.c;
-          ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
-          ctx.restore();
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a);
+          ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2); ctx.restore();
           if (p.y < H + 30) allOut = false;
         }
-        if (!allOut) requestAnimationFrame(tick);
-        else fadeOut();
+        if (!allOut) requestAnimationFrame(tick); else fadeOut();
       }
       function fadeOut(){
         let op = 1;
         const id = setInterval(()=>{
-          op -= 0.08;
-          canvas.style.opacity = op.toString();
+          op -= 0.08; canvas.style.opacity = op.toString();
           if (op <= 0){ clearInterval(id); canvas.remove(); }
         }, 40);
       }
