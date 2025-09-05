@@ -1,3 +1,11 @@
+<!doctype html>
+<!--
+HOW TO USE THIS FILE ON GITHUB PAGES
+1) Put all photos under /pictures in your repo (can include subfolders).
+2) Edit the IMAGE_LIST array below to list your images relative to /pictures.
+   Examples: "IMG_0001.jpg", "trip1/DSC_0123.JPG", "cats/pic.webp"
+3) Commit & push. No manifest.json or directory fetch is needed, so it’s fast.
+-->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -79,6 +87,11 @@
       z-index:2;
     }
     .envelope.open .flap{ transform:rotateX(-180deg) }
+
+    /* Tiny helper message if no images load */
+    .warn{
+      margin-top:8px; font-size:.9rem; opacity:.8
+    }
   </style>
 </head>
 <body>
@@ -115,6 +128,7 @@ I promise to always love you, to hold your hand through everything, and yes, to 
 Always yours,
 Yu Cheng
         </p>
+        <div id="warning" class="warn" style="display:none">No pictures found. Make sure IMAGE_LIST below is filled with filenames from your <code>pictures/</code> folder.</div>
       </div>
       <div style="position:relative">
         <div class="slideshow" id="slideshow"></div>
@@ -129,6 +143,66 @@ Yu Cheng
   </audio>
 
   <script>
+    const IMAGE_LIST = [
+		"DXZ_6035.JPG",
+		"photo_10_2025-08-04_23-16-26.jpg",
+		"photo_11_2025-08-04_23-16-26.jpg",
+		"photo_12_2025-08-04_23-16-26.jpg",
+		"photo_15_2025-08-04_23-16-26.jpg",
+		"photo_16_2025-08-04_23-16-26.jpg",
+		"photo_17_2025-08-04_23-16-26.jpg",
+		"photo_18_2025-08-04_23-16-26.jpg",
+		"photo_19_2025-08-04_23-16-26.jpg",
+		"photo_1_2025-08-04_23-26-41.jpg",
+		"photo_1_2025-08-04_23-33-50.jpg",
+		"photo_1_2025-08-06_00-05-49.jpg",
+		"photo_1_2025-08-06_00-26-21.jpg",
+		"photo_20_2025-08-04_23-16-26.jpg",
+		"photo_22_2025-08-04_23-16-26.jpg",
+		"photo_23_2025-08-04_23-16-26.jpg",
+		"photo_24_2025-08-04_23-16-26.jpg",
+		"photo_26_2025-08-04_23-16-26.jpg",
+		"photo_27_2025-08-04_23-16-26.jpg",
+		"photo_28_2025-08-04_23-16-26.jpg",
+		"photo_29_2025-08-04_23-16-26.jpg",
+		"photo_2_2025-08-04_23-16-26.jpg",
+		"photo_2_2025-08-06_00-05-49.jpg",
+		"photo_2_2025-08-06_00-26-21.jpg",
+		"photo_30_2025-08-04_23-16-26.jpg",
+		"photo_31_2025-08-04_23-16-26.jpg",
+		"photo_33_2025-08-04_23-16-26.jpg",
+		"photo_34_2025-08-04_23-16-26.jpg",
+		"photo_35_2025-08-04_23-16-26.jpg",
+		"photo_36_2025-08-04_23-16-26.jpg",
+		"photo_38_2025-08-04_23-16-26.jpg",
+		"photo_39_2025-08-04_23-16-26.jpg",
+		"photo_3_2025-08-04_23-33-50.jpg",
+		"photo_3_2025-08-06_00-05-49.jpg",
+		"photo_40_2025-08-04_23-16-26.jpg",
+		"photo_41_2025-08-04_23-16-26.jpg",
+		"photo_42_2025-08-04_23-16-26.jpg",
+		"photo_44_2025-08-04_23-16-26.jpg",
+		"photo_45_2025-08-04_23-16-26.jpg",
+		"photo_46_2025-08-04_23-16-26.jpg",
+		"photo_47_2025-08-04_23-16-26.jpg",
+		"photo_48_2025-08-04_23-16-26.jpg",
+		"photo_49_2025-08-04_23-16-26.jpg",
+		"photo_4_2025-08-04_23-16-26.jpg",
+		"photo_4_2025-08-04_23-26-41.jpg",
+		"photo_4_2025-08-06_00-05-49.jpg",
+		"photo_5_2025-08-04_23-16-26.jpg",
+		"photo_5_2025-08-06_00-05-49.jpg",
+		"photo_6_2025-08-04_23-16-26.jpg",
+		"photo_6_2025-08-04_23-26-41.jpg",
+		"photo_7_2025-08-04_23-16-26.jpg",
+		"photo_7_2025-08-04_23-26-41.jpg",
+		"photo_7_2025-08-06_00-05-49.jpg",
+		"photo_8_2025-08-04_23-16-26.jpg",
+		"photo_9_2025-08-06_00-05-49.jpg"
+	];
+
+
+    // ========= 2) Counter =========
     const startDate = new Date("2022-09-09");
     const daysEl = document.getElementById("daysTogether");
     function updateDays(){
@@ -138,20 +212,19 @@ Yu Cheng
     }
     updateDays(); setInterval(updateDays, 60_000);
 
+    // ========= Music =========
     const bgMusic = document.getElementById("bgMusic");
     async function playMusic(){
-      try{
-        bgMusic.muted = false;
-        bgMusic.volume = 1.0;
-        await bgMusic.play();
-      }catch(e){/* ignore */}
+      try{ bgMusic.muted = false; bgMusic.volume = 1.0; await bgMusic.play(); }catch(e){}
     }
 
+    // ========= Slideshow =========
     let images = [];
     let index = -1;
     let timer = null;
     const duration = 4000;
     const slideshow = document.getElementById("slideshow");
+    const warning = document.getElementById("warning");
 
     function createSlide(src){
       const img = document.createElement("img");
@@ -173,7 +246,7 @@ Yu Cheng
       setActive(index);
     }
     function startSlideshow(){
-      if (!images.length) return;
+      if (!images.length){ warning.style.display = "block"; return; }
       if (timer) clearInterval(timer);
       slideshow.innerHTML = "";
       images.forEach(img => slideshow.appendChild(createSlide(img.src)));
@@ -181,48 +254,7 @@ Yu Cheng
       timer = setInterval(nextSlide, duration);
     }
 
-    // === GitHub Pages friendly loader: use manifest.json ===
-    async function loadFromManifest(){
-      try{
-        const res = await fetch("pictures/manifest.json", {cache:"no-store"});
-        if (!res.ok) return false;
-        const list = await res.json();
-        if (!Array.isArray(list) || !list.length) return false;
-        images = list
-          .filter(name => typeof name === "string" && /\.(jpe?g|png|gif|webp)$/i.test(name))
-          .map(name => ({src: "pictures/" + name}));
-        images.sort((a,b) => a.src.localeCompare(b.src, undefined, {numeric:true, sensitivity:"base"}));
-        return images.length > 0;
-      }catch(e){ return false; }
-    }
-
-    // Fallback probe (works if your files follow common names like photo1.jpg or IMG_0001.jpg)
-    async function lightProbe(){
-      const exts = [".jpg",".jpeg",".JPG",".JPEG",".png",".PNG",".webp",".WEBP"];
-      const candidates = [];
-      for (let i=1;i<=200;i++){ exts.forEach(ext => candidates.push(`pictures/photo${i}${ext}`)); }
-      for (let i=1;i<=200;i++){
-        const s4 = String(i).padStart(4,"0");
-        ["IMG_","DSC_","PXL_","DXZ_"].forEach(prefix => {
-          exts.forEach(ext => candidates.push(`pictures/${prefix}${s4}${ext}`));
-        });
-      }
-      const checks = candidates.map(src => new Promise(resolve => {
-        const im = new Image();
-        im.onload = () => resolve(src);
-        im.onerror = () => resolve(null);
-        im.src = src + "?t=" + Date.now();
-      }));
-      const loaded = await Promise.all(checks);
-      const found = loaded.filter(Boolean);
-      if (found.length){
-        images = found.map(src => ({src}));
-        images.sort((a,b) => a.src.localeCompare(b.src, undefined, {numeric:true, sensitivity:"base"}));
-        return true;
-      }
-      return false;
-    }
-
+    // ========= Envelope open logic =========
     const overlay = document.getElementById("overlay");
     const envelope = document.getElementById("envelope");
 
@@ -231,15 +263,20 @@ Yu Cheng
       await new Promise(r => setTimeout(r, 650));
       playMusic();
       fireConfetti();
-      // Use manifest on GitHub Pages
-      const ok = await loadFromManifest();
-      if (!ok){ await lightProbe(); }
+
+      // Use inline IMAGE_LIST (fast, Pages-friendly)
+      images = (IMAGE_LIST || [])
+        .filter(name => typeof name === "string" && name.trim())
+        .map(name => ({src: "pictures/" + name}));
+      images.sort((a,b) => a.src.localeCompare(b.src, undefined, {numeric:true, sensitivity:"base"}));
+
       startSlideshow();
       overlay.classList.add("hidden");
       setTimeout(() => { overlay.remove(); }, 700);
     }
     envelope.addEventListener("click", openLetter, {once:true});
 
+    // ========= Confetti =========
     function fireConfetti(){
       const canvas = document.getElementById("confetti");
       const ctx = canvas.getContext("2d");
